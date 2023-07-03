@@ -85,6 +85,7 @@ type bpfSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfProgramSpecs struct {
+	BpfRedir     *ebpf.ProgramSpec `ebpf:"bpf_redir"`
 	BpfSockopsCb *ebpf.ProgramSpec `ebpf:"bpf_sockops_cb"`
 }
 
@@ -133,11 +134,13 @@ func (m *bpfMaps) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfPrograms struct {
+	BpfRedir     *ebpf.Program `ebpf:"bpf_redir"`
 	BpfSockopsCb *ebpf.Program `ebpf:"bpf_sockops_cb"`
 }
 
 func (p *bpfPrograms) Close() error {
 	return _BpfClose(
+		p.BpfRedir,
 		p.BpfSockopsCb,
 	)
 }

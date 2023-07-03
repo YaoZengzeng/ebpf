@@ -120,4 +120,58 @@ struct {
 	__type(value, int);
 } sock_ops_map SEC(".maps");
 
+#define __bpf_md_ptr(type, name) \
+	union { \
+		type name; \
+		__u64 : 64; \
+	} __attribute__((aligned(8)))
+
+struct bpf_sock {
+	__u32 bound_dev_if;
+	__u32 family;
+	__u32 type;
+	__u32 protocol;
+	__u32 mark;
+	__u32 priority;
+	/* IP address also allows 1 and 2 bytes access */
+	__u32 src_ip4;
+	__u32 src_ip6[4];
+	__u32 src_port;  /* host byte order */
+	__be16 dst_port; /* network byte order */
+	__u16 : 16;      /* zero padding */
+	__u32 dst_ip4;
+	__u32 dst_ip6[4];
+	__u32 state;
+	__s32 rx_queue_mapping;
+};
+
+/* user accessible metadata for SK_MSG packet hook, new fields must
+ * be added to the end of this structure
+ */
+struct sk_msg_md {
+	__bpf_md_ptr(void *, data);
+	__bpf_md_ptr(void *, data_end);
+
+	__u32 family;
+	__u32 remote_ip4;    /* Stored in network byte order */
+	__u32 local_ip4;     /* Stored in network byte order */
+	__u32 remote_ip6[4]; /* Stored in network byte order */
+	__u32 local_ip6[4];  /* Stored in network byte order */
+	__u32 remote_port;   /* Stored in network byte order */
+	__u32 local_port;    /* stored in host byte order */
+	__u32 size;          /* Total size of sk_msg */
+
+	__bpf_md_ptr(struct bpf_sock *, sk); /* current socket */
+};
+
+/* BPF_FUNC_clone_redirect and BPF_FUNC_redirect flags. */
+enum {
+	BPF_F_INGRESS = (1ULL << 0),
+};
+
+enum sk_action {
+	SK_DROP = 0,
+	SK_PASS,
+};
+
 #endif
