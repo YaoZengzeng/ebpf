@@ -33,6 +33,17 @@ type bpfSkKey struct {
 	RemotePort uint32
 }
 
+type bpfSockKey struct {
+	Sip4   uint32
+	Dip4   uint32
+	Family uint8
+	Pad1   uint8
+	Pad2   uint16
+	Pad3   uint32
+	Sport  uint32
+	Dport  uint32
+}
+
 // loadBpf returns the embedded CollectionSpec for bpf.
 func loadBpf() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_BpfBytes)
@@ -83,6 +94,7 @@ type bpfProgramSpecs struct {
 type bpfMapSpecs struct {
 	MapEstabSk *ebpf.MapSpec `ebpf:"map_estab_sk"`
 	RttEvents  *ebpf.MapSpec `ebpf:"rtt_events"`
+	SockOpsMap *ebpf.MapSpec `ebpf:"sock_ops_map"`
 }
 
 // bpfObjects contains all objects after they have been loaded into the kernel.
@@ -106,12 +118,14 @@ func (o *bpfObjects) Close() error {
 type bpfMaps struct {
 	MapEstabSk *ebpf.Map `ebpf:"map_estab_sk"`
 	RttEvents  *ebpf.Map `ebpf:"rtt_events"`
+	SockOpsMap *ebpf.Map `ebpf:"sock_ops_map"`
 }
 
 func (m *bpfMaps) Close() error {
 	return _BpfClose(
 		m.MapEstabSk,
 		m.RttEvents,
+		m.SockOpsMap,
 	)
 }
 

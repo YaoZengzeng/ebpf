@@ -1,5 +1,5 @@
 /*
- * Note that this header file contains a subset of kernel 
+ * Note that this header file contains a subset of kernel
  * definitions needed for the tcprtt_sockops example.
  */
 #ifndef BPF_SOCKOPS_H
@@ -10,19 +10,19 @@
  * See: https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/bpf.h#L6347.
  */
 enum {
-	TCP_ESTABLISHED = 1,
-	TCP_SYN_SENT = 2,
-	TCP_SYN_RECV = 3,
-	TCP_FIN_WAIT1 = 4,
-	TCP_FIN_WAIT2 = 5,
-	TCP_TIME_WAIT = 6,
-	TCP_CLOSE = 7,
-	TCP_CLOSE_WAIT = 8,
-	TCP_LAST_ACK = 9,
-	TCP_LISTEN = 10,
-	TCP_CLOSING = 11,
+	TCP_ESTABLISHED  = 1,
+	TCP_SYN_SENT     = 2,
+	TCP_SYN_RECV     = 3,
+	TCP_FIN_WAIT1    = 4,
+	TCP_FIN_WAIT2    = 5,
+	TCP_TIME_WAIT    = 6,
+	TCP_CLOSE        = 7,
+	TCP_CLOSE_WAIT   = 8,
+	TCP_LAST_ACK     = 9,
+	TCP_LISTEN       = 10,
+	TCP_CLOSING      = 11,
 	TCP_NEW_SYN_RECV = 12,
-	TCP_MAX_STATES = 13,
+	TCP_MAX_STATES   = 13,
 };
 
 /*
@@ -64,7 +64,7 @@ enum {
 };
 
 /*
- * Copy of bpf.h's bpf_sock_ops with minimal subset 
+ * Copy of bpf.h's bpf_sock_ops with minimal subset
  * of fields used by the tcprtt_sockops example.
  * See: https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/bpf.h#L6101.
  */
@@ -81,7 +81,43 @@ struct bpf_sock_ops {
 	__u32 remote_port;
 	__u32 local_port;
 	__u32 srtt_us;
-    __u32 bpf_sock_ops_cb_flags;
+	__u32 bpf_sock_ops_cb_flags;
 } __attribute__((preserve_access_index));
+
+#ifndef FORCE_READ
+#define FORCE_READ(X) (*(volatile typeof(X) *)&X)
+#endif
+
+#ifdef PRINTNL
+#define PRINT_SUFFIX "\n"
+#else
+#define PRINT_SUFFIX ""
+#endif
+
+#ifndef printk
+#define printk(fmt, ...) \
+	({ \
+		char ____fmt[] = fmt PRINT_SUFFIX; \
+		bpf_trace_printk(____fmt, sizeof(____fmt), ##__VA_ARGS__); \
+	})
+#endif
+
+struct sock_key {
+	__u32 sip4;
+	__u32 dip4;
+	__u8 family;
+	__u8 pad1;  // this padding required for 64bit alignment
+	__u16 pad2; // else ebpf kernel verifier rejects loading of the program
+	__u32 pad3;
+	__u32 sport;
+	__u32 dport;
+} __attribute__((packed));
+
+struct {
+	__uint(type, BPF_MAP_TYPE_SOCKHASH);
+	__uint(max_entries, 65535);
+	__type(key, struct sock_key);
+	__type(value, int);
+} sock_ops_map SEC(".maps");
 
 #endif
