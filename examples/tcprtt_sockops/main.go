@@ -20,6 +20,9 @@
 // 2022/08/14 20:58:33 10.0.1.205      38620  -> 140.82.121.4    443    26
 // 2022/08/14 20:58:43 34.67.40.146    45380  -> 10.0.1.205      5201   106
 // 2022/08/14 20:58:43 34.67.40.146    45380  -> 10.0.1.205      5201   106
+//
+// sudo cat /sys/kernel/debug/tracing/trace_pipe
+// 查看sockmap日志
 
 package main
 
@@ -72,7 +75,7 @@ func main() {
 
 	// Attach ebpf program to a cgroupv2
 	// 关联ebpf程序到cgroupv2
-	link, err := link.AttachCgroup(link.CgroupOptions{
+	l, err := link.AttachCgroup(link.CgroupOptions{
 		Path:    cgroupPath,
 		Program: objs.bpfPrograms.BpfSockopsCb,
 		Attach:  ebpf.AttachCGroupSockOps,
@@ -80,7 +83,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer link.Close()
+	defer l.Close()
+
+	err = link.RawAttachProgram(link.RawAttachProgramOptions{
+		Target:  objs.bpfMaps.SockOpsMap.FD(),
+		Program: objs.bpfPrograms.BpfRedir,
+		Attach:  ebpf.AttachSkMsgVerdict,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// eBPF程序加载并且关联到cgroup
 	log.Printf("eBPF program loaded and attached on cgroup %s\n", cgroupPath)

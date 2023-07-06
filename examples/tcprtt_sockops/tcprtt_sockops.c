@@ -234,6 +234,8 @@ SEC("sk_msg")
 int bpf_redir(struct sk_msg_md *msg) {
 	struct sock_key key = {};
 	extract_key4_from_msg(msg, &key);
-	bpf_msg_redirect_hash(msg, &sock_ops_map, &key, BPF_F_INGRESS);
+	long ret = bpf_msg_redirect_hash(msg, &sock_ops_map, &key, BPF_F_INGRESS);
+	printk("ret is %, redirect % bytes with eBPF successfully", ret, msg->size);
+
 	return SK_PASS;
 }
