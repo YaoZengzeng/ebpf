@@ -12,27 +12,6 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type bpfRttEvent struct {
-	Sport uint16
-	Dport uint16
-	Saddr uint32
-	Daddr uint32
-	Srtt  uint32
-}
-
-type bpfSkInfo struct {
-	SkKey  bpfSkKey
-	SkType uint8
-	_      [3]byte
-}
-
-type bpfSkKey struct {
-	LocalIp4   uint32
-	RemoteIp4  uint32
-	LocalPort  uint32
-	RemotePort uint32
-}
-
 type bpfSockKey struct {
 	Sip4   uint32
 	Dip4   uint32
@@ -93,8 +72,6 @@ type bpfProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfMapSpecs struct {
-	MapEstabSk *ebpf.MapSpec `ebpf:"map_estab_sk"`
-	RttEvents  *ebpf.MapSpec `ebpf:"rtt_events"`
 	SockOpsMap *ebpf.MapSpec `ebpf:"sock_ops_map"`
 }
 
@@ -117,15 +94,11 @@ func (o *bpfObjects) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfMaps struct {
-	MapEstabSk *ebpf.Map `ebpf:"map_estab_sk"`
-	RttEvents  *ebpf.Map `ebpf:"rtt_events"`
 	SockOpsMap *ebpf.Map `ebpf:"sock_ops_map"`
 }
 
 func (m *bpfMaps) Close() error {
 	return _BpfClose(
-		m.MapEstabSk,
-		m.RttEvents,
 		m.SockOpsMap,
 	)
 }

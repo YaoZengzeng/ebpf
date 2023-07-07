@@ -113,13 +113,6 @@ struct sock_key {
 	__u32 dport;
 } __attribute__((packed));
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKHASH);
-	__uint(max_entries, 65535);
-	__type(key, struct sock_key);
-	__type(value, int);
-} sock_ops_map SEC(".maps");
-
 #define __bpf_md_ptr(type, name) \
 	union { \
 		type name; \
